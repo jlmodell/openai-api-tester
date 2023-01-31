@@ -31,6 +31,7 @@ const Home: NextPage = () => {
     // This data is a ReadableStream
     const data = response.body;
     if (!data) {
+      setLoading(false);
       return;
     }
 
