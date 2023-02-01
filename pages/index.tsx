@@ -1,7 +1,8 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn, signOut, getSession } from "next-auth/react";
+import { isValidUser } from "../utils/isValidUser";
 
 const LoginComponent = () => {
   const { data: session } = useSession();
@@ -23,12 +24,25 @@ const LoginComponent = () => {
   );
 };
 
-const isValidUser = (email: string) =>
-  [
-    "jacquescousteau@gmail.com",
-    "meagan.modell@gmail.com",
-    "hmenjivar87@gmail.com",
-  ].includes(email.toLowerCase());
+export const getServerSideProps = async (context: any) => {
+  const session = await getSession(context);
+
+  if (!session) {
+    return {
+      props: {},
+    };
+  }
+
+  if (!isValidUser(session?.user?.email ?? "")) {
+    return {
+      props: {},
+    };
+  }
+
+  return {
+    props: { session },
+  };
+};
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
@@ -62,6 +76,7 @@ const Home: NextPage = () => {
       },
       body: JSON.stringify({
         prompt,
+        email: session?.user?.email ?? "",
       }),
     });
     console.log("Edge function returned.");

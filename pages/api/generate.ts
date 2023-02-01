@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { OpenAIStream, OpenAIStreamPayload } from "../../utils/openaistream";
+import { isValidUser } from "../../utils/isValidUser";
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("Missing env var from OpenAI");
@@ -10,12 +11,25 @@ export const config = {
 };
 
 const handler = async (req: NextRequest): Promise<Response> => {
-  const { prompt } = (await req.json()) as {
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  const { prompt, email } = (await req.json()) as {
     prompt?: string;
+    email?: string;
   };
 
   if (!prompt) {
     return new Response("No prompt in the request", { status: 400 });
+  }
+
+  if (!email) {
+    return new Response("No email in the request", { status: 400 });
+  }
+
+  if (!isValidUser(email)) {
+    return new Response("Invalid user", { status: 401 });
   }
 
   const payload: OpenAIStreamPayload = {
